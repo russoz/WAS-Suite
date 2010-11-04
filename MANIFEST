@@ -2,7 +2,7 @@ Build.PL
 Changes
 MANIFEST
 README
-lib/WAS/Remote/Install.pm
+lib/WAS/Remote/App.pm
 t/00.load.t
 t/perlcritic.t
 t/pod-coverage.t

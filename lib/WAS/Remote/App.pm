@@ -1,4 +1,4 @@
-package WAS::Remote::Install;
+package WAS::Remote::App;
 
 use warnings;
 use strict;
@@ -6,32 +6,27 @@ use Carp;
 
 use version; $VERSION = qv('0.0.3');
 
-# Other recommended modules (uncomment to use):
-#  use IO::Prompt;
-#  use Perl6::Export;
-#  use Perl6::Slurp;
-#  use Perl6::Say;
+use Moose;
 
+has 'hostname'     => ( is => 'rw', isa => 'Str', );
+has 'profile_path' => ( is => 'rw', isa => 'Str', );
+has 'was_server'   => ( is => 'rw', isa => 'Str', );
+has 'app_name'     => ( is => 'rw', isa => 'Str', );
 
-# Module implementation here
+no Moose;
+__PACKAGE__->meta->make_immutable;
 
-
-1; # Magic true value required at end of module
+1;    # Magic true value required at end of module
 __END__
 
 =head1 NAME
 
-WAS::Remote::Install - [One line description of module's purpose here]
-
-
-=head1 VERSION
-
-This document describes WAS::Remote::Install version 0.0.1
+WAS::Remote::App - [One line description of module's purpose here]
 
 
 =head1 SYNOPSIS
 
-    use WAS::Remote::Install;
+    use WAS::Remote::App;
 
 =for author to fill in:
     Brief code example(s) here showing commonest usage(s).
@@ -87,7 +82,7 @@ This document describes WAS::Remote::Install version 0.0.1
     that can be set. These descriptions must also include details of any
     configuration language used.
   
-WAS::Remote::Install requires no configuration files or environment variables.
+WAS::Remote::App requires no configuration files or environment variables.
 
 
 =head1 DEPENDENCIES

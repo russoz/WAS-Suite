@@ -3,15 +3,16 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-    module_name         => 'WAS::Remote::Install',
-    license             => 'perl',
-    dist_author         => 'Alexei Znamensky <russoz@cpan.org>',
-    dist_version_from   => 'lib/WAS/Remote/Install.pm',
-    requires => {
+    module_name       => 'WAS::Remote::App',
+    license           => 'perl',
+    dist_author       => 'Alexei Znamensky <russoz@cpan.org>',
+    dist_version_from => 'lib/WAS/Remote/App.pm',
+    requires          => {
+        'Moose'      => 0,
         'Test::More' => 0,
         'version'    => 0,
     },
-    add_to_cleanup      => [ 'WAS-Remote-Install-*' ],
+    add_to_cleanup => ['WAS-Remote-App-*'],
 );
 
 $builder->create_build_script();
