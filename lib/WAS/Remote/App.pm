@@ -1,12 +1,9 @@
 package WAS::Remote::App;
 
-use warnings;
-use strict;
 use Carp;
-
-use version; $VERSION = qv('0.0.3');
-
 use Moose;
+
+use version; our $VERSION = qv('0.0.3');
 
 has 'hostname'     => ( is => 'rw', isa => 'Str', );
 has 'profile_path' => ( is => 'rw', isa => 'Str', );
