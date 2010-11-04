@@ -8,9 +8,11 @@ my $builder = Module::Build->new(
     dist_author       => 'Alexei Znamensky <russoz@cpan.org>',
     dist_version_from => 'lib/WAS/Remote/App.pm',
     requires          => {
-        'Moose'      => 0,
-        'Test::More' => 0,
-        'version'    => 0,
+        'DateTime'           => 0,
+        'DateTime::TimeZone' => 0,
+        'Moose'              => 0,
+        'Test::More'         => 0,
+        'version'            => 0,
     },
     add_to_cleanup => ['WAS-Remote-App-*'],
 );
