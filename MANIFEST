@@ -1,7 +1,6 @@
 Build.PL
 Changes
 MANIFEST
-Makefile.PL
 README
 lib/WAS/Remote/Install.pm
 t/00.load.t
