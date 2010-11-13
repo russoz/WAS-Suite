@@ -2,13 +2,213 @@ package WAS::Remote::App;
 
 use Carp;
 use Moose;
+use File::Spec;
+use File::Path qw(make_path);
+use File::Copy;
+use Try::Tiny;
 
+use autodie;
 use version; our $VERSION = qv('0.0.3');
 
-has 'hostname'     => ( is => 'rw', isa => 'Str', );
-has 'profile_path' => ( is => 'rw', isa => 'Str', );
-has 'was_server'   => ( is => 'rw', isa => 'Str', );
-has 'app_name'     => ( is => 'rw', isa => 'Str', );
+has 'local_base_dir' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_host' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_user' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_profile_path' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_was_server' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_app_name' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'rem_tmp_dir' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'tmp',
+);
+
+has 'rem_sudo_user' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has 'timezone' => (
+    is      => 'ro',
+    isa     => 'Str',
+    default => sub {
+        use DateTime::TimeZone;
+        return DateTime::TimeZone->( name => 'local' );
+    },
+);
+
+has 'timestamp' => (
+    is      => 'ro',
+    isa     => 'DateTime',
+    default => sub {
+        use DateTime;
+        return DateTime->now;
+    },
+);
+
+has 'wsadmin_cmd' => (
+    is      => 'rw',
+    isa     => 'Str',
+    default => 'wsadmin.sh',
+);
+
+has 'cmd_prefix' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+has 'cmd_suffix' => (
+    is  => 'rw',
+    isa => 'Str',
+);
+
+sub _timestamp {
+    my $self = shift;
+    return $self->timestamp->set_time_zone( $self->timezone )->ymd('.');
+}
+
+sub _gen_script {
+    my $spec = shift;
+
+    my $file = undef;
+    try {
+        open( $file, '>', $spec->{script} );
+        print $file <<"EOF";
+# update-ear.py
+#
+# Alexei Znamensky
+# russoz AT cpan.org
+#
+
+import sys, java
+from java.util import Date,TimeZone
+from java.text import SimpleDateFormat
+
+tzspec="$spec->{tz}"
+
+if len(sys.argv) != 2:
+    print >> sys.stderr, 'update-ear.py: <enterprise-app> <ear-file>'
+    sys.exit(1)
+
+tz = TimeZone.getTimeZone(tzspec)
+df = SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS z")
+df.setTimeZone(tz)
+
+def log(msg):
+    print >> sys.stderr, "=== ["+df.format(Date())+"]", msg
+
+appname="$spec->{appname}"
+appear ="$spec->{appear}"
+
+options = [ "-update", "-appname", appname, "-update.ignore.new", "-verbose" ]
+
+try:
+    log("Installing Application from "+appear)
+    AdminApp.install( appear, options )
+    log("Installation completed")
+
+    log("Saving configuration")
+    AdminConfig.save()
+
+except:
+    print '************ EXCEPTION:'
+    print sys.exc_info()
+    print 'Modifications not saved'
+    exit(1)
+
+EOF
+    }
+    finally {
+        close $file;
+    }
+    return;
+}
+
+sub _remloc {
+    my ( $self, $d ) = @_;
+    return $self->rem_user . '@' . $self->rem_host . ':' . $d;
+}
+
+sub prepare_remote_install {
+    my ( $self, $earfile ) = shift;
+
+    my $timestamp = $self->_timestamp();
+
+    my $scriptfile = 'script-' . $timestamp . '.py';
+    my $local_work_dir =
+      File::Spec->catfile( $self->local_base_dir, 'work', $timestamp );
+
+    make_path($local_work_dir)
+      || die 'Cannot create directory: ' . $local_work_dir;
+
+    my $script = File::Spec->catfile( $local_work_dir, $scriptfile );
+    my $appear = File::Spec->catfile( $local_work_dir, $earfile );
+
+    _gen_script(
+        {
+            script  => $script,
+            tz      => $self->timezone,
+            appname => $self->rem_app_name,
+
+            # the jython script must use relative name
+            appear => $earfile,
+        }
+    );
+
+    my $sftp = Net::SFTP->( $self->rem_host, user => $self->rem_user );
+
+    #my $attrs = Net::SFTP::Attributes->new();
+    #$attrs->perms( 0770 );
+
+    my $rem_work_dir =
+      File::Spec->catfile( File::Spec->rootdir(), $self->rem_tmp_dir,
+        'was-remote-app-' . $$ . '-' . $timestamp );
+
+    $sftp->do_mkdir($rem_work_dir);
+
+    $sftp->put( $script, File::Spec->catfile( $rem_work_dir, $scriptfile ) )
+      || die q{Cannot copy file "}
+      . $scriptfile
+      . q{" to }
+      . $self->_remloc($rem_work_dir);
+
+    $sftp->put( $appear, File::Spec->catfile( $rem_work_dir, $earfile ) )
+      || die q{Cannot copy file "} 
+      . $earfile 
+      . q{" to }
+      . $self->_remloc($rem_work_dir);
+
+    return;
+}
 
 no Moose;
 __PACKAGE__->meta->make_immutable;
@@ -18,7 +218,7 @@ __END__
 
 =head1 NAME
 
-WAS::Remote::App - [One line description of module's purpose here]
+WAS::Remote::App - Remote application control for WebSphere
 
 
 =head1 SYNOPSIS
@@ -39,6 +239,16 @@ WAS::Remote::App - [One line description of module's purpose here]
 
 
 =head1 INTERFACE 
+
+=over
+
+=item prepare_remote_install( EARFILE )
+
+This method will prepare installation scripts to deploy EARFILE into the
+instance-defined WAS instance and application. This currently works only
+with UNIX systems with SSH daemons.
+
+=back
 
 =for author to fill in:
     Write a separate section listing the public components of the modules
