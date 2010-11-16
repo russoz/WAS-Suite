@@ -4,12 +4,19 @@ NAME
 SYNOPSIS
         use WAS::Remote::App;
 
+        my $app = Was::Remote::App->new( ... );
+        my $rem_script = $app->prepare_remote_install( 'myapp.ear' );
+        my $exit = $app->do_remote_install( $rem_script );
+
 DESCRIPTION
 INTERFACE
     prepare_remote_install( EARFILE )
         This method will prepare installation scripts to deploy EARFILE into
         the instance-defined WAS instance and application. This currently
         works only with UNIX systems with SSH daemons.
+
+    do_remote_install( SCRIPT )
+        Executes the remote installation script in the server.
 
 DIAGNOSTICS
     "Error message here, perhaps with %s placeholders"
