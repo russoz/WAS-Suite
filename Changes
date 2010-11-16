@@ -1,5 +1,9 @@
 Revision history for WAS-Remote-App
 
+0.0.4   [2010.11.16 10:00:21] WAS::Remote::App DIST VERSION 0.0.4
+======= ======================================================================
+27ce221 added some dependencies
+
 0.0.3   [2010.11.13 18:26:07] WAS::Remote::App DIST VERSION 0.0.3
 ======= ======================================================================
 b326c71 multiple changes

@@ -10,13 +10,18 @@ SYNOPSIS
 
 DESCRIPTION
 INTERFACE
-    prepare_remote_install( EARFILE )
-        This method will prepare installation scripts to deploy EARFILE into
-        the instance-defined WAS instance and application. This currently
+    prepare_files( EARFILE)
+        Given an EARFILE, this method will prepare a wsadmin jython script
+        to install it, and copy both the script and the EARFILE to a
+        specific directory.
+
+    prepare_remote_install()
+        This method will copy the files prepared by the "prepare_files()"
+        method to a temporary location in the remote server. This currently
         works only with UNIX systems with SSH daemons.
 
-    do_remote_install( SCRIPT )
-        Executes the remote installation script in the server.
+    do_remote_install()
+        Executes the installation script in the remote server.
 
 DIAGNOSTICS
     "Error message here, perhaps with %s placeholders"
