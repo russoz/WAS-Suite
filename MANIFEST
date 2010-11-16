@@ -3,6 +3,7 @@ Changes
 MANIFEST
 README
 lib/WAS/Remote/App.pm
+lib/WAS/Remote/App.pod
 t/00.load.t
 t/perlcritic.t
 t/pod-coverage.t
