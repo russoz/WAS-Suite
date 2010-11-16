@@ -240,8 +240,7 @@ sub prepare_remote_install {
         ssh_args => { compression => 0 },
         user     => $self->rem_user,
         $self->has_password ? ( password => $self->rem_pass ) : (),
-    );
-    croak qq{Cannot open a SFTP connection!} unless $sftp;
+    ) || croak qq{Cannot open a SFTP connection!};
 
     my $attr = Net::SFTP::Attributes->new();
     $attr->perm('0755');
@@ -278,11 +277,10 @@ sub do_remote_install {
 
     my $ssh = Net::SSH::Perl->new(
         $self->rem_host,
-        debug       => 0,
+        debug       => 2,
         use_pty     => 0,
         compression => 0
-    );
-    croak q{Cannot open a SSH connection!} unless $ssh;
+    ) || croak q{Cannot open a SSH connection!};
 
     $ssh->login( $self->rem_user,
         $self->has_password ? $self->rem_pass : undef );
