@@ -19,66 +19,38 @@ use Data::Dumper;
 use autodie;
 use version; our $VERSION = qv('0.0.5');
 
-has 'local_base_dir' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
+# installation-related attributes
+has 'sudo'      => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
+has 'sudo_user' => ( is => 'rw', isa => 'Str',  predicate => 'has_sudo_user', );
+has 'use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
 
-has 'rem_host' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
+# local file preparation/execution attributes
+has 'local_base_dir' => ( is => 'rw', isa => 'Str', required => 1, );
+has 'local_work_dir' => ( is => 'rw', isa => 'Str', );
+has 'appear'         => ( is => 'rw', isa => 'Str', );
+has 'script'         => ( is => 'rw', isa => 'Str', );
 
-has 'rem_user' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
+# websphere-related attributes
+has 'was_profile_path' => ( is => 'rw', isa => 'Str', required => 1, );
+has 'was_app_name'     => ( is => 'rw', isa => 'Str', required => 1, );
+has 'cmd_wsadmin_prefix' => ( is => 'rw', isa => 'Str', );
+has 'cmd_wsadmin_suffix' => ( is => 'rw', isa => 'Str', );
+has 'cmd_wsadmin' => ( is => 'rw', isa => 'Str', default => 'wsadmin.sh', );
 
-has 'rem_pass' => (
-    is        => 'rw',
-    isa       => 'Str',
-    predicate => 'has_password',
-);
-
-has 'rem_tmp_dir' => (
-    is      => 'rw',
+# remote-installation -related attributes
+has 'rem_host' => ( is => 'rw', isa => 'Str', predicate => 'is_remote', );
+has 'rem_user' => ( is => 'rw', isa => 'Str', );
+has 'rem_pass' => ( is => 'rw', isa => 'Str', predicate => 'has_password', );
+has 'rem_work_dir' => ( is => 'rw', isa => 'Str', );
+has 'rem_appear'   => ( is => 'rw', isa => 'Str', );
+has 'rem_script'   => ( is => 'rw', isa => 'Str', );
+has 'rem_tmp_dir'  => (
+    is      => 'ro',
     isa     => 'Str',
     default => File::Spec->catfile( File::Spec->rootdir(), 'tmp' ),
 );
 
-has 'was_profile_path' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
-
-has 'was_app_name' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
-
-has 'sudo' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => 'sudo',
-);
-
-has 'sudo_user' => (
-    is        => 'rw',
-    isa       => 'Str',
-    predicate => 'has_sudo_user',
-);
-
-has 'use_sudo' => (
-    is        => 'rw',
-    isa       => 'Bool',
-    predicate => 'has_sudo',
-);
-
+# time-keeping attributes
 has 'timezone' => (
     is      => 'ro',
     isa     => 'DateTime::TimeZone',
@@ -97,67 +69,10 @@ has 'timestamp' => (
     },
 );
 
-has 'cmd_wsadmin' => (
-    is      => 'rw',
-    isa     => 'Str',
-    default => 'wsadmin.sh',
-);
-
-has 'cmd_wsadmin_prefix' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'cmd_wsadmin_suffix' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'local_work_dir' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'appear' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'script' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'rem_work_dir' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'rem_appear' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'rem_script' => (
-    is  => 'rw',
-    isa => 'Str',
-);
-
-has 'output' => (
-    is      => 'rw',
-    isa     => 'FileHandle',
-    default => sub {
-        return *STDERR{IO};
-    },
-);
-
-has 'cmd_output' => (
-    is      => 'rw',
-    isa     => 'FileHandle',
-    default => sub {
-        return *STDERR{IO};
-    },
-);
+# output-related attributes
+has 'output' => ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
+has 'cmd_output' =>
+  ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
 
 sub _msg {
     my $self   = shift;
