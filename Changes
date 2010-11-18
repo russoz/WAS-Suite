@@ -1,4 +1,12 @@
-Revision history for WAS-Remote-App
+Revision history for WAS-App-Install
+
+0.0.5   [2010.11.18 08:36:07] WAS::App::Install DIST VERSION 0.0.5
+======= ======================================================================
+ad3249a renamed to WAS::App::Install, bumped version to 0.0.5
+ee2cadb added pod file
+027aa55 checking for .pod file - not only .pm
+2f6b028 added pod file to the manifest
+9243539 small cosmetic change
 
 0.0.4   [2010.11.16 10:00:21] WAS::Remote::App DIST VERSION 0.0.4
 ======= ======================================================================
