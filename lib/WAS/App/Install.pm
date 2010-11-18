@@ -43,37 +43,37 @@ has 'rem_pass' => (
     predicate => 'has_password',
 );
 
-has 'rem_profile_path' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
-
-has 'rem_app_name' => (
-    is       => 'rw',
-    isa      => 'Str',
-    required => 1,
-);
-
 has 'rem_tmp_dir' => (
     is      => 'rw',
     isa     => 'Str',
     default => File::Spec->catfile( File::Spec->rootdir(), 'tmp' ),
 );
 
-has 'rem_sudo' => (
+has 'was_profile_path' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'was_app_name' => (
+    is       => 'rw',
+    isa      => 'Str',
+    required => 1,
+);
+
+has 'sudo' => (
     is      => 'rw',
     isa     => 'Str',
     default => 'sudo',
 );
 
-has 'rem_sudo_user' => (
+has 'sudo_user' => (
     is        => 'rw',
     isa       => 'Str',
     predicate => 'has_sudo_user',
 );
 
-has 'rem_use_sudo' => (
+has 'use_sudo' => (
     is        => 'rw',
     isa       => 'Bool',
     predicate => 'has_sudo',
@@ -213,7 +213,7 @@ sub prepare_files {
     $self->rem_work_dir(
         File::Spec->catfile(
             $self->rem_tmp_dir,
-            'was-deploy-' . $self->rem_app_name . '-' . $timestamp . '-' . $$
+            'was-deploy-' . $self->was_app_name . '-' . $timestamp . '-' . $$
         )
     );
     $self->rem_script(
@@ -226,7 +226,7 @@ sub prepare_files {
         {
             script  => $self->script,
             tz      => $self->timezone->name,
-            appname => $self->rem_app_name,
+            appname => $self->was_app_name,
             appear  => $self->rem_appear,
         }
     );
@@ -284,12 +284,12 @@ sub do_remote_install {
 
     $self->_msg( 1, 'Doing remote install' );
     my $wsadmin =
-      File::Spec->catfile( $self->rem_profile_path, 'bin', $self->cmd_wsadmin );
+      File::Spec->catfile( $self->was_profile_path, 'bin', $self->cmd_wsadmin );
 
     #my $cmd  = 'echo ';
-    my $cmd  = '';
-    my $sudo = $self->rem_sudo
-      . ( $self->has_sudo_user ? ' -u ' . $self->rem_sudo_user : '' );
+    my $cmd = '';
+    my $sudo =
+      $self->sudo . ( $self->has_sudo_user ? ' -u ' . $self->sudo_user : '' );
     $cmd .= $sudo if $self->has_sudo();
     $cmd .=
         $self->cmd_wsadmin_prefix() . ' ' 
