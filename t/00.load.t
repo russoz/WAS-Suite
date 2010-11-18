@@ -1,7 +1,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-    use_ok('WAS::Remote::App');
+    use_ok('WAS::App::Install');
 }
 
-diag("Testing WAS::Remote::App $WAS::Remote::App::VERSION");
+diag("Testing WAS::::Install $WAS::App::Install::VERSION");

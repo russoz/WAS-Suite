@@ -1,4 +1,4 @@
-package WAS::Remote::App;
+package WAS::App::Install;
 
 use Carp;
 use Moose;
@@ -17,7 +17,7 @@ use Net::SFTP;
 use Data::Dumper;
 
 use autodie;
-use version; our $VERSION = qv('0.0.4');
+use version; our $VERSION = qv('0.0.5');
 
 has 'local_base_dir' => (
     is       => 'rw',
