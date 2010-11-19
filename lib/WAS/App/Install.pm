@@ -74,9 +74,10 @@ has 'timestamp' => (
 );
 
 # output-related attributes
-has 'output' => ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
+has 'output' =>
+  ( is => 'rw', isa => 'FileHandle', default => sub { *STDERR{IO} }, );
 has 'cmd_output' =>
-  ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
+  ( is => 'rw', isa => 'FileHandle', default => sub { *STDERR{IO} }, );
 
 ##############################################################################
 
@@ -93,7 +94,15 @@ sub _msg {
 
 sub _timestamp {
     my $self = shift;
-    return $self->timestamp->set_time_zone( $self->timezone )->ymd('.');
+    my $now  = shift;
+
+    # masturbacao semantica - mas eh legal
+    return sub { my $t = shift; return $t->ymd('.') . '-' . $t->hms('.') }
+      ->(
+        $now eq 'now'
+        ? DateTime->now->set_time_zone( $self->timezone )
+        : $self->timestamp->set_time_zone( $self->timezone )
+      );
 }
 
 sub _gen_script {
@@ -133,23 +142,12 @@ sub prepare_files {
 
     make_path( $self->local_work_dir );
 
-    $self->rem_work_dir(
-        catfile(
-            $self->rem_tmp_dir,
-            'was-deploy-' . $self->was_app_name . '-' . $timestamp . '-' . $$
-        )
-    );
-    $self->rem_script( catfile( $self->rem_work_dir, $scriptfile ) );
-    $self->rem_appear( catfile( $self->rem_work_dir, $earfile ) );
-
     # Generate script
     $self->_msg( 2, 'Generating script:', $self->script );
     _gen_script(
         {
-            script  => $self->script,
-            tz      => $self->timezone->name,
-            appname => $self->was_app_name,
-            appear  => $self->rem_appear,
+            script => $self->script,
+            tz     => $self->timezone->name,
         }
     );
 
@@ -158,9 +156,26 @@ sub prepare_files {
     copy( $earfile, $self->appear )
       or croak qq{Failed to copy '$earfile' to '$self->appear' ($!)};
     $self->_msg( 1, 'prepare_file() completed' );
+
+    # prepare remote installation
+    if ( $self->is_remote ) {
+        $self->rem_work_dir(
+            catfile(
+                $self->rem_tmp_dir,
+                'was-deploy-'
+                  . $self->was_app_name . '-'
+                  . $timestamp . '-'
+                  . $$
+            )
+        );
+        $self->rem_script( catfile( $self->rem_work_dir, $scriptfile ) );
+        $self->rem_appear( catfile( $self->rem_work_dir, $earfile ) );
+
+        $self->_prepare_remote_install;
+    }
 }
 
-sub prepare_remote_install {
+sub _prepare_remote_install {
     my $self = shift;
 
     $self->_msg( 1, 'Preparing remote installation' );
@@ -216,6 +231,7 @@ sub do_remote_install {
       . ' -lang jython -f '
       . $self->rem_script . ' '
       . $self->cmd_wsadmin_suffix();
+    $cmd .= ' ' . $self->was_app_name . ' ' . $self->rem_appear;
     $self->_msg( 2, 'cmd: ', $cmd );
 
     $self->_msg( 2, 'Opening SSH connection with host:', $self->rem_host );
@@ -227,15 +243,11 @@ sub do_remote_install {
     ) || croak q{Cannot open a SSH connection!};
 
     $self->_msg( 3, 'Logging in...' );
-    $ssh->login( $self->rem_user,
-        $self->has_password ? $self->rem_pass : () );
+    $ssh->login( $self->rem_user, $self->has_password ? $self->rem_pass : () );
 
     #print $self->output 'DEBUG: ' . $cmd . "\n";
-
     $self->_msg( 3, 'Dispatching installation command' );
     my ( $out, $err, $exit ) = $ssh->cmd($cmd);
-
-    #my ( $out, $err, $exit ) = $ssh->cmd('sudo ls -l /etc/security');
 
     my $handle = $self->cmd_output;
     foreach my $eline ( split $/, $err ) {
@@ -267,6 +279,10 @@ from java.text import SimpleDateFormat
 
 tzspec="$spec->{tz}"
 
+if len(sys.argv) != 2:
+    print >> sys.stderr, 'update-ear.py: <enterprise-app> <ear-file>'
+    sys.exit(1)
+
 tz = TimeZone.getTimeZone(tzspec)
 df = SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS z")
 df.setTimeZone(tz)
@@ -274,8 +290,8 @@ df.setTimeZone(tz)
 def log(msg):
     print >> sys.stderr, "=== ["+df.format(Date())+"]", msg
 
-appname="$spec->{appname}"
-appear ="$spec->{appear}"
+appname=sys.argv[0]
+appear =sys.argv[1]
 
 options = [ "-update", "-appname", appname, "-update.ignore.new", "-verbose" ]
 
