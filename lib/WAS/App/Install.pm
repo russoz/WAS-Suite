@@ -21,9 +21,9 @@ use version; our $VERSION = qv('0.0.5');
 ##############################################################################
 
 # installation-related attributes
+has 'use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
 has 'sudo'      => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
 has 'sudo_user' => ( is => 'rw', isa => 'Str',  predicate => 'has_sudo_user', );
-has 'use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
 
 # local file preparation/execution attributes
 has 'local_base_dir' => ( is => 'rw', isa => 'Str', required => 1, );
@@ -251,6 +251,8 @@ sub _do_local_install {
 
     my $cmd = $self->_make_cmd;
     $self->_msg( 2, 'cmd: ', $cmd );
+    $self->_msg( 3, 'Dispatching installation command' );
+    $self->_msg( 1, '_do_local_install() completed' );
 }
 
 sub _do_remote_install {
@@ -285,7 +287,7 @@ sub _do_remote_install {
     }
     croak 'Failed to run remote command (' . $exit . '): $!' if $exit;
 
-    $self->_msg( 1, 'do_remote_install() completed' );
+    $self->_msg( 1, '_do_remote_install() completed' );
 }
 
 no Moose;
