@@ -7,7 +7,6 @@ use common::sense;
 use File::Spec::Functions;
 use File::Path qw(make_path);
 use File::Copy;
-use Try::Tiny;
 
 use DateTime;
 use DateTime::TimeZone;
