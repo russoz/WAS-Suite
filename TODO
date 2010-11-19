@@ -1,0 +1,18 @@
+Update POD
+
+Code the local install
+
+Work with configuration files
+- constructor will need a section from the config file to work with
+  - one config file, multiple instances
+  - or maybe this should be done by the calling script
+
+Study the Net::SSH::Perl and check if it's possible to work with file handles
+rather than scalars for stderr and stdout.
+
+Improve timestamping on the output
+
+Colorized output
+- stdout => green
+- stderr => red
+
