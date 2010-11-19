@@ -28,8 +28,8 @@ has 'use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
 # local file preparation/execution attributes
 has 'local_base_dir' => ( is => 'rw', isa => 'Str', required => 1, );
 has 'local_work_dir' => ( is => 'rw', isa => 'Str', );
-has 'appear'         => ( is => 'rw', isa => 'Str', );
-has 'script'         => ( is => 'rw', isa => 'Str', );
+has 'local_appear'   => ( is => 'rw', isa => 'Str', );
+has 'local_script'   => ( is => 'rw', isa => 'Str', );
 
 # websphere-related attributes
 has 'was_profile_path' => ( is => 'rw', isa => 'Str', required => 1, );
@@ -136,24 +136,24 @@ sub prepare_files {
     $self->local_work_dir(
         catfile( $self->local_base_dir, 'work', $timestamp ) );
     $self->_msg( 2, 'Local work directory:', $self->local_work_dir );
-    $self->script( catfile( $self->local_work_dir, $scriptfile ) );
-    $self->appear( catfile( $self->local_work_dir, $earfile ) );
+    $self->local_script( catfile( $self->local_work_dir, $scriptfile ) );
+    $self->local_appear( catfile( $self->local_work_dir, $earfile ) );
 
     make_path( $self->local_work_dir );
 
     # Generate script
-    $self->_msg( 2, 'Generating script:', $self->script );
+    $self->_msg( 2, 'Generating script:', $self->local_script );
     _gen_script(
         {
-            script => $self->script,
+            script => $self->local_script,
             tz     => $self->timezone->name,
         }
     );
 
     # Copy EAR file
-    $self->_msg( 2, 'Copying EAR file.:', $self->appear );
-    copy( $earfile, $self->appear )
-      or croak qq{Failed to copy '$earfile' to '$self->appear' ($!)};
+    $self->_msg( 2, 'Copying EAR file.:', $self->local_appear );
+    copy( $earfile, $self->local_appear )
+      or croak qq{Failed to copy '$earfile' to '$self->local_appear' ($!)};
     $self->_msg( 1, 'prepare_file() completed' );
 
     # prepare remote installation
@@ -198,25 +198,34 @@ sub _prepare_remote_install {
     $sftp->do_mkdir( $self->rem_work_dir, $attr );
 
     $self->_msg( 3, 'Copying script..:', $self->rem_script );
-    $sftp->put( $self->script, $self->rem_script )
+    $sftp->put( $self->local_script, $self->rem_script )
       || croak q{Cannot copy file "}
-      . $self->script
+      . $self->local_script
       . q{" to }
       . $self->_remloc( $self->rem_work_dir );
 
     $self->_msg( 3, 'Copying EAR file:', $self->rem_appear );
-    $sftp->put( $self->appear, $self->rem_appear )
+    $sftp->put( $self->local_appear, $self->rem_appear )
       || croak q{Cannot copy file "}
-      . $self->appear
+      . $self->local_appear
       . q{" to }
       . $self->_remloc( $self->rem_work_dir );
     $self->_msg( 1, 'prepare_remote_install() completed' );
 }
 
-sub do_remote_install {
+sub do_install {
+    my $self = shift;
+    if ( $self->is_remote ) {
+        $self->_do_remote_install;
+    }
+    else {
+        $self->_do_local_install;
+    }
+}
+
+sub _make_cmd {
     my $self = shift;
 
-    $self->_msg( 1, 'Doing remote install' );
     my $wsadmin = catfile( $self->was_profile_path, 'bin', $self->cmd_wsadmin );
 
     #my $cmd  = 'echo ';
@@ -226,11 +235,30 @@ sub do_remote_install {
     $cmd .= $sudo if $self->has_sudo();
     $cmd .=
         $self->cmd_wsadmin_prefix() . ' ' 
-      . $wsadmin
-      . ' -lang jython -f '
-      . $self->rem_script . ' '
+      . $wsadmin . ' -lang jython -f '
+      . ( $self->is_remote ? $self->rem_script : $self->local_script ) . ' '
       . $self->cmd_wsadmin_suffix();
-    $cmd .= ' ' . $self->was_app_name . ' ' . $self->rem_appear;
+    $cmd .= ' '
+      . $self->was_app_name . ' '
+      . ( $self->is_remote ? $self->rem_appear : $self->local_appear );
+    return $cmd;
+}
+
+sub _do_local_install {
+    my $self = shift;
+
+    $self->_msg( 1, 'Doing local install' );
+
+    my $cmd = $self->_make_cmd;
+    $self->_msg( 2, 'cmd: ', $cmd );
+}
+
+sub _do_remote_install {
+    my $self = shift;
+
+    $self->_msg( 1, 'Doing remote install' );
+
+    my $cmd = $self->_make_cmd;
     $self->_msg( 2, 'cmd: ', $cmd );
 
     $self->_msg( 2, 'Opening SSH connection with host:', $self->rem_host );
