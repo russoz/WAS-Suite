@@ -4,7 +4,7 @@ use Carp;
 use Moose;
 use common::sense;
 
-use File::Spec;
+use File::Spec::Functions;
 use File::Path qw(make_path);
 use File::Copy;
 use Try::Tiny;
@@ -18,6 +18,8 @@ use Data::Dumper;
 
 use autodie;
 use version; our $VERSION = qv('0.0.5');
+
+##############################################################################
 
 # installation-related attributes
 has 'sudo'      => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
@@ -34,21 +36,23 @@ has 'script'         => ( is => 'rw', isa => 'Str', );
 has 'was_profile_path' => ( is => 'rw', isa => 'Str', required => 1, );
 has 'was_app_name'     => ( is => 'rw', isa => 'Str', required => 1, );
 has 'cmd_wsadmin_prefix' => ( is => 'rw', isa => 'Str', );
-has 'cmd_wsadmin_suffix' => ( is => 'rw', isa => 'Str', );
 has 'cmd_wsadmin' => ( is => 'rw', isa => 'Str', default => 'wsadmin.sh', );
+has 'cmd_wsadmin_suffix' => ( is => 'rw', isa => 'Str', );
 
 # remote-installation -related attributes
 has 'rem_host' => ( is => 'rw', isa => 'Str', predicate => 'is_remote', );
-has 'rem_user' => ( is => 'rw', isa => 'Str', );
+has 'rem_user' =>
+  ( is => 'rw', isa => 'Str', default => getpwuid($<) || undef, );
 has 'rem_pass' => ( is => 'rw', isa => 'Str', predicate => 'has_password', );
 has 'rem_work_dir' => ( is => 'rw', isa => 'Str', );
 has 'rem_appear'   => ( is => 'rw', isa => 'Str', );
 has 'rem_script'   => ( is => 'rw', isa => 'Str', );
-has 'rem_tmp_dir'  => (
-    is      => 'ro',
-    isa     => 'Str',
-    default => File::Spec->catfile( File::Spec->rootdir(), 'tmp' ),
-);
+
+has 'rem_tmp_dir' =>
+  ( is => 'ro', isa => 'Str', default => catfile( rootdir(), 'tmp' ), );
+
+has 'rem_ssh_args' =>
+  ( is => 'rw', isa => 'HashRef', predicate => 'has_ssh_args', );
 
 # time-keeping attributes
 has 'timezone' => (
@@ -74,12 +78,16 @@ has 'output' => ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
 has 'cmd_output' =>
   ( is => 'rw', isa => 'FileHandle', default => *STDERR{IO}, );
 
+##############################################################################
+
+my @_indent = ( '===', '      ', '      \=>', '            ', );
+
 sub _msg {
     my $self   = shift;
     my $level  = shift;
     my $handle = $self->output;
     local $, = ' ';
-    print $handle '===' x $level, @_;
+    print $handle $_indent[$level], @_;
     print $handle "\n";
 }
 
@@ -118,22 +126,21 @@ sub prepare_files {
     my $scriptfile = 'script-' . $timestamp . '.py';
 
     $self->local_work_dir(
-        File::Spec->catfile( $self->local_base_dir, 'work', $timestamp ) );
+        catfile( $self->local_base_dir, 'work', $timestamp ) );
     $self->_msg( 2, 'Local work directory:', $self->local_work_dir );
-    $self->script( File::Spec->catfile( $self->local_work_dir, $scriptfile ) );
-    $self->appear( File::Spec->catfile( $self->local_work_dir, $earfile ) );
+    $self->script( catfile( $self->local_work_dir, $scriptfile ) );
+    $self->appear( catfile( $self->local_work_dir, $earfile ) );
 
     make_path( $self->local_work_dir );
 
     $self->rem_work_dir(
-        File::Spec->catfile(
+        catfile(
             $self->rem_tmp_dir,
             'was-deploy-' . $self->was_app_name . '-' . $timestamp . '-' . $$
         )
     );
-    $self->rem_script(
-        File::Spec->catfile( $self->rem_work_dir, $scriptfile ) );
-    $self->rem_appear( File::Spec->catfile( $self->rem_work_dir, $earfile ) );
+    $self->rem_script( catfile( $self->rem_work_dir, $scriptfile ) );
+    $self->rem_appear( catfile( $self->rem_work_dir, $earfile ) );
 
     # Generate script
     $self->_msg( 2, 'Generating script:', $self->script );
@@ -165,11 +172,9 @@ sub prepare_remote_install {
     );
     my $sftp = Net::SFTP->new(
         $self->rem_host,
-
-        #debug    => 1,
-        ssh_args => { compression => 0 },
-        user     => $self->rem_user,
-        $self->has_password ? ( password => $self->rem_pass ) : (),
+        user => $self->rem_user,
+        $self->has_password ? ( password => $self->rem_pass )     : (),
+        $self->has_ssh_args ? ( ssh_args => $self->rem_ssh_args ) : (),
     ) || croak qq{Cannot open a SFTP connection!};
 
     my $attr = Net::SFTP::Attributes->new();
@@ -198,8 +203,7 @@ sub do_remote_install {
     my $self = shift;
 
     $self->_msg( 1, 'Doing remote install' );
-    my $wsadmin =
-      File::Spec->catfile( $self->was_profile_path, 'bin', $self->cmd_wsadmin );
+    my $wsadmin = catfile( $self->was_profile_path, 'bin', $self->cmd_wsadmin );
 
     #my $cmd  = 'echo ';
     my $cmd = '';
@@ -219,11 +223,12 @@ sub do_remote_install {
         $self->rem_host,
         protocol => 2,
         use_pty  => 1,
+        $self->has_ssh_args ? @{ $self->rem_ssh_args } : (),
     ) || croak q{Cannot open a SSH connection!};
 
     $self->_msg( 3, 'Logging in...' );
     $ssh->login( $self->rem_user,
-        $self->has_password ? $self->rem_pass() : undef );
+        $self->has_password ? $self->rem_pass : () );
 
     #print $self->output 'DEBUG: ' . $cmd . "\n";
 
@@ -231,7 +236,6 @@ sub do_remote_install {
     my ( $out, $err, $exit ) = $ssh->cmd($cmd);
 
     #my ( $out, $err, $exit ) = $ssh->cmd('sudo ls -l /etc/security');
-    croak 'Failed to run remote command (' . $exit . '): $!' if $exit;
 
     my $handle = $self->cmd_output;
     foreach my $eline ( split $/, $err ) {
@@ -240,6 +244,8 @@ sub do_remote_install {
     foreach my $oline ( split $/, $out ) {
         print $handle '> ' . $oline . "\n";
     }
+    croak 'Failed to run remote command (' . $exit . '): $!' if $exit;
+
     $self->_msg( 1, 'do_remote_install() completed' );
 }
 
