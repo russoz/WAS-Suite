@@ -2,6 +2,7 @@ Build.PL
 Changes
 MANIFEST
 README
+examples/test-was-remote.pl
 lib/WAS/App/Install.pm
 lib/WAS/App/Install.pod
 t/00.load.t
