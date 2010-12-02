@@ -1,6 +1,6 @@
 #!/bin/bash
 
-modulename='WAS::App::Install'
+modulename='WAS::App'
 modulepath=$(echo $modulename | sed -e 's/::/\//g').pm
 __podpath=$(echo $modulepath | sed -e 's/\.pm$/\.pod/')
 if [ -f "lib/${__podpath}" ]; then

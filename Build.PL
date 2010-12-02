@@ -3,10 +3,10 @@ use warnings;
 use Module::Build;
 
 my $builder = Module::Build->new(
-    module_name       => 'WAS::App::Install',
+    module_name       => 'WAS::App',
     license           => 'perl',
     dist_author       => 'Alexei Znamensky <russoz@cpan.org>',
-    dist_version_from => 'lib/WAS/App/Install.pm',
+    dist_version_from => 'lib/WAS/App.pm',
     requires          => {
         'Net::SFTP'      => 0,
         'Net::SSH::Perl' => 0,
@@ -20,7 +20,7 @@ my $builder = Module::Build->new(
         'Test::More'     => 0,
         'version'        => 0,
     },
-    add_to_cleanup => ['WAS-App-Install-*'],
+    add_to_cleanup => ['WAS-App-*'],
 );
 
 $builder->create_build_script();
