@@ -1,5 +1,10 @@
 Update POD
 
+Make a script that goes into /bin, something like: was-app-install
+- use MooseX::Getopt
+
+Do a dry-run by default
+
 Code the local install
 
 Work with configuration files
