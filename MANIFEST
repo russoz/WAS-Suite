@@ -3,6 +3,9 @@ Changes
 MANIFEST
 README
 examples/test-was-remote.pl
+lib/WAS/Suite.pm
+lib/WAS/App.pm
+lib/WAS/App/Server.pm
 lib/WAS/App/Install.pm
 lib/WAS/App/Install.pod
 t/00.load.t

@@ -21,6 +21,7 @@ use version; our $VERSION = qv('0.0.5');
 ##############################################################################
 
 # installation-related attributes
+has 'really_do' => ( is => 'ro', isa => 'Bool', default   => 0 );
 has 'use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
 has 'sudo'      => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
 has 'sudo_user' => ( is => 'rw', isa => 'Str',  predicate => 'has_sudo_user', );
@@ -87,7 +88,7 @@ sub _msg {
     my $level  = shift;
     my $handle = $self->output;
     local $, = ' ';
-    print $handle $_indent[$level], @_;
+    print $handle $_indent[ $level - 1 ], @_;
     print $handle "\n";
 }
 
@@ -105,7 +106,21 @@ sub _timestamp {
 }
 
 sub _gen_script {
+    my $self = shift;
     my $spec = shift;
+
+    $spec->{timestamp} = $self->_timestamp('now');
+    $spec->{tz}        = $self->timezone->name;
+
+    # making sure the flag is correctly set in here
+    if ( $self->really_do ) {
+        $spec->{really_do} = 1;
+        $self->_msg( 3,
+            'DRY-RUN: the generated script will not actually update anything' );
+    }
+    else {
+        $spec->{really_do} = 0;
+    }
 
     #print STDERR Dumper($spec);
     my $rawdata = join '', (<DATA>);
@@ -131,7 +146,7 @@ sub prepare_files {
     $self->_msg( 1, 'Preparing files' );
     my $timestamp = $self->_timestamp();
     $self->_msg( 2, 'Timestamp:', $timestamp );
-    my $scriptfile = 'script-' . $timestamp . '.py';
+    my $scriptfile = 'update-ear-.py';
 
     $self->local_work_dir(
         catfile( $self->local_base_dir, 'work', $timestamp ) );
@@ -143,12 +158,7 @@ sub prepare_files {
 
     # Generate script
     $self->_msg( 2, 'Generating script:', $self->local_script );
-    _gen_script(
-        {
-            script => $self->local_script,
-            tz     => $self->timezone->name,
-        }
-    );
+    $self->_gen_script( { script => $self->local_script, } );
 
     # Copy EAR file
     $self->_msg( 2, 'Copying EAR file.:', $self->local_appear );
@@ -235,7 +245,8 @@ sub _make_cmd {
     $cmd .= $sudo if $self->has_sudo();
     $cmd .=
         $self->cmd_wsadmin_prefix() . ' ' 
-      . $wsadmin . ' -lang jython -f '
+      . $wsadmin
+      . ' -lang jython -f '
       . ( $self->is_remote ? $self->rem_script : $self->local_script ) . ' '
       . $self->cmd_wsadmin_suffix();
     $cmd .= ' '
@@ -276,6 +287,7 @@ sub _do_remote_install {
 
     #print $self->output 'DEBUG: ' . $cmd . "\n";
     $self->_msg( 3, 'Dispatching installation command' );
+    $self->_msg( 4, 'DRY-RUN: Not actually installing!' );
     my ( $out, $err, $exit ) = $ssh->cmd($cmd);
 
     my $handle = $self->cmd_output;
@@ -298,26 +310,28 @@ __PACKAGE__->meta->make_immutable;
 __DATA__
 # update-ear.py
 #
-# Alexei Znamensky
-# russoz AT cpan.org
+# Generated in perl, using WAS::App::Install
+#
+# by Alexei Znamensky - russoz AT cpan.org
+#
+# Script created at: $spec->{timestamp} ($spec->{tz})
 #
 
 import sys, java
 from java.util import Date,TimeZone
 from java.text import SimpleDateFormat
 
-tzspec="$spec->{tz}"
+def log(msg):
+    print >> sys.stderr, "=== ["+df.format(Date())+"]", msg
 
 if len(sys.argv) != 2:
     print >> sys.stderr, 'update-ear.py: <enterprise-app> <ear-file>'
     sys.exit(1)
 
+tzspec="$spec->{tz}"
 tz = TimeZone.getTimeZone(tzspec)
 df = SimpleDateFormat("yyyy.MM.dd HH:mm:ss.SSS z")
 df.setTimeZone(tz)
-
-def log(msg):
-    print >> sys.stderr, "=== ["+df.format(Date())+"]", msg
 
 appname=sys.argv[0]
 appear =sys.argv[1]
@@ -330,7 +344,10 @@ try:
     log("Installation completed")
 
     log("Saving configuration")
-    AdminConfig.save()
+    if $spec->{really_do} == 1:
+        AdminConfig.save()
+    else:
+        log("DRY-RUN, not saving!!")
 
 except:
     print '************ EXCEPTION:'

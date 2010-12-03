@@ -8,8 +8,8 @@ WAS::App::Install - Application installation for WebSphere
     use WAS::App::Install;
 
     my $app = Was::App::Install->new( ... );
-    my $rem_script = $app->prepare_remote_install( 'myapp.ear' );
-    my $exit = $app->do_remote_install( $rem_script );
+    my $rem_script = $app->prepare_files( 'myapp.ear' );
+    my $exit = $app->do_install( $rem_script );
 
 =for author to fill in:
     Brief code example(s) here showing commonest usage(s).
@@ -33,15 +33,9 @@ WAS::App::Install - Application installation for WebSphere
 Given an EARFILE, this method will prepare a wsadmin jython script to 
 install it, and copy both the script and the EARFILE to a specific directory.
 
-=item prepare_remote_install()
+=item do_install()
 
-This method will copy the files prepared by the C<< prepare_files() >> method
-to a temporary location in the remote server.  This currently works only with
-UNIX systems with SSH daemons.
-
-=item do_remote_install()
-
-Executes the installation script in the remote server.
+Executes the installation script.
 
 =back
 
