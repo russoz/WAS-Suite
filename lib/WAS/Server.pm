@@ -1,4 +1,4 @@
-package WAS::App::Server;
+package WAS::Server;
 
 use Moose;
 use common::sense;

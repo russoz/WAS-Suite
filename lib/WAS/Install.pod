@@ -1,13 +1,13 @@
 =head1 NAME
 
-WAS::App::Install - Application installation for WebSphere
+WAS::Install - Application installation for WebSphere
 
 
 =head1 SYNOPSIS
 
-    use WAS::App::Install;
+    use WAS::Install;
 
-    my $app = Was::App::Install->new( ... );
+    my $app = Was::Install->new( ... );
     my $rem_script = $app->prepare_files( 'myapp.ear' );
     my $exit = $app->do_install( $rem_script );
 

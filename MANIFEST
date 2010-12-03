@@ -5,9 +5,9 @@ README
 examples/test-was-remote.pl
 lib/WAS/Suite.pm
 lib/WAS/App.pm
-lib/WAS/App/Server.pm
-lib/WAS/App/Install.pm
-lib/WAS/App/Install.pod
+lib/WAS/Server.pm
+lib/WAS/Install.pm
+lib/WAS/Install.pod
 t/00.load.t
 t/perlcritic.t
 t/pod-coverage.t

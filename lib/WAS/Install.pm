@@ -1,4 +1,4 @@
-package WAS::App::Install;
+package WAS::Install;
 
 use Carp;
 use Moose;
@@ -310,7 +310,7 @@ __PACKAGE__->meta->make_immutable;
 __DATA__
 # update-ear.py
 #
-# Generated in perl, using WAS::App::Install
+# Generated in perl, using WAS::Install
 #
 # by Alexei Znamensky - russoz AT cpan.org
 #
