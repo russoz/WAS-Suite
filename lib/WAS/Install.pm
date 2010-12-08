@@ -24,16 +24,16 @@ use autodie;
 
 ##############################################################################
 
-has 'application' => ( is => 'ro', isa => 'WAS::App', required => 1 );
+has 'application' => ( is => 'ro', isa => 'WAS::App',    required => 1 );
 has 'server'      => ( is => 'ro', isa => 'WAS::Server', required => 1 );
 
 # installation-related attributes
-has 'really_do' => ( is => 'ro', isa => 'Bool', default   => 0 );
+has 'really_do' => ( is => 'ro', isa => 'Bool', default => 0 );
 
 # sudo attributes
-has '_use_sudo'  => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
-has '_sudo'      => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
-has '_sudo_user' => ( is => 'rw', isa => 'Str',  predicate => 'has_sudo_user', );
+has '_use_sudo' => ( is => 'rw', isa => 'Bool', predicate => 'has_sudo', );
+has '_sudo'     => ( is => 'rw', isa => 'Str',  default   => 'sudo', );
+has '_sudo_user' => ( is => 'rw', isa => 'Str', predicate => 'has_sudo_user', );
 
 # local file preparation/execution attributes
 has 'local_base_dir' => ( is => 'rw', isa => 'Str', required => 1, );
