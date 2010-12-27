@@ -3,14 +3,14 @@ package WAS::App::Expander;
 use Moose;
 use common::sense;
 
-use version; our $VERSION = qv('0.0.3');
+use version; our $VERSION = qv('0.5.1');
 
 use autodie;
 use Cwd;
 use File::Spec::Functions;
 use File::Basename;
 use File::Find;
-use Archive::Zip qw( :ERROR_CODES );;
+use Archive::Zip qw( :ERROR_CODES );
 use MooseX::Types::Path::Class;
 
 use Data::Dumper;
@@ -18,26 +18,26 @@ use Data::Dumper;
 with 'MooseX::Getopt';
 
 has 'earfile' => (
-    is => 'ro',
-    isa => 'Path::Class::File',
+    is       => 'ro',
+    isa      => 'Path::Class::File',
     required => 1,
-    coerce => 1,
+    coerce   => 1,
 );
 
 has 'dest' => (
-    is => 'ro',
-    isa => 'Path::Class::Dir',
+    is       => 'ro',
+    isa      => 'Path::Class::Dir',
     required => 1,
-    coerce => 1,
-    lazy => 1,
-    default => sub { _dir_name( shift->earfile ); },
+    coerce   => 1,
+    lazy     => 1,
+    default  => sub { _dir_name( shift->earfile ); },
 );
 
 has extensions => (
-    is => 'ro',
-    isa => 'ArrayRef[Str]',
-    lazy => 1,
-    default => sub { [ qw/jar war ear zip/ ] },
+    is      => 'ro',
+    isa     => 'ArrayRef[Str]',
+    lazy    => 1,
+    default => sub { [qw/jar war ear zip/] },
 );
 
 sub _dir_name {
@@ -47,36 +47,44 @@ sub _dir_name {
 }
 
 sub _expand {
-    my ($self, $zipname, $expanded) = @_;
+    my ( $self, $zipname, $expanded ) = @_;
 
     #print Data::Dumper->Dump( [$zipname,$expanded], [qw/zipname expanded/] );
 
-    my $basename = basename( $zipname );
+    my $basename = basename($zipname);
 
     my $olddir = getcwd;
     mkdir $expanded unless -d $expanded;
     chdir $expanded;
-    
-    my $a = Archive::Zip->new( catfile('..',$basename ) );
+
+    my $a = Archive::Zip->new( catfile( '..', $basename ) );
     my $res = $a->extractTree();
     die $res unless $res == AZ_OK;
 
-    find( { wanted => sub {
-        my $filename = $_;
-        print STDERR 'file name: '.$filename."\n";
-        return unless -f $filename;
-        print STDERR 'found file: '.$filename."\n";
-        my $ext = $filename;
+    find(
+        {
+            wanted => sub {
+                my $filename = $_;
 
-        #print STDERR '(ext,test) = ('.$ext,$test.")\n";
-        return unless (fileparse($filename, @{ $self->extensions }))[2];
+                #print STDERR 'file name: '.$filename."\n";
+                return unless -f $filename;
 
-        print STDERR 'further expanding: '.$filename."\n";
-        _expand( $self, $filename, _dir_name($filename) );
+                #print STDERR 'found file: '.$filename."\n";
+                my $ext = $filename;
 
-        unlink $filename unless $filename eq $self->earfile->stringify;
-        rename _dir_name($filename), $filename;
-    }, }, '.');
+                #print STDERR '(ext,test) = ('.$ext,$test.")\n";
+                return
+                  unless ( fileparse( $filename, @{ $self->extensions } ) )[2];
+
+                #print STDERR 'further expanding: '.$filename."\n";
+                _expand( $self, $filename, _dir_name($filename) );
+
+                unlink $filename unless $filename eq $self->earfile->stringify;
+                rename _dir_name($filename), $filename;
+            },
+        },
+        '.'
+    );
 
     chdir $olddir;
 }
@@ -93,7 +101,7 @@ sub expand {
 
 __PACKAGE__->meta->make_immutable;
 
-1; # Magic true value required at end of module
+1;    # Magic true value required at end of module
 __END__
 
 =head1 NAME
@@ -103,7 +111,7 @@ WAS::App::Expander - [One line description of module's purpose here]
 
 =head1 VERSION
 
-This document describes WAS::App::Expander version 0.0.1
+This document describes WAS::App::Expander version 0.5.1
 
 
 =head1 SYNOPSIS
