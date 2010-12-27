@@ -33,9 +33,13 @@ A weak reference, non-mandatory,
 
 =cut
 
-has name   => ( is => 'ro', isa => 'Str',         required => 1, );
-has server => ( is => 'rw', isa => 'WAS::Server', weak_ref => 1,
- handles => { profile => 'server->profile', }, );
+has name => ( is => 'ro', isa => 'Str', required => 1, );
+has server => (
+    is       => 'rw',
+    isa      => 'WAS::Server',
+    weak_ref => 1,
+    handles  => { profile => 'server->profile', },
+);
 
 =head1 AUTHOR
 

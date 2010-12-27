@@ -43,9 +43,13 @@ The list of applications installed in this server.
 =cut
 
 has name => ( is => 'ro', isa => 'Str', required => 1, );
-has profile => ( is => 'ro', isa => 'WAS::Profile', weak_ref => 1 );
-has apps => 
-	( is => 'ro', isa => 'ArrayRef[WAS::App]', default => sub { [] }, );
+has profile => (
+    is       => 'ro',
+    isa      => 'WAS::Profile',
+    weak_ref => 1,
+    handles  => { host => 'profile', }
+);
+has apps => ( is => 'ro', isa => 'ArrayRef[WAS::App]', default => sub { [] }, );
 
 =head1 AUTHOR
 

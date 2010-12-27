@@ -125,7 +125,7 @@ must be of the type C<WAS::Script>.
 =cut
 
 sub run_script {
-    my ( $self, $script ) = (shift, shift);
+    my ( $self, $script ) = ( shift, shift );
 
     $self->confess('The object passed does not consume the WAS::Script role')
       unless ( blessed($script) && $script->isa('WAS::Script') );

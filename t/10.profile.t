@@ -14,8 +14,10 @@ package main;
 eval { my $ss = OneProfile->new; };
 ok($@);
 
-my $s = OneProfile->new( name => 'AppSrv01',
-path => '/somewhere/over/the/rainbow' );
+my $s = OneProfile->new(
+    name => 'AppSrv01',
+    path => '/somewhere/over/the/rainbow'
+);
 ok($s);
 ok( $s->is_local );
 

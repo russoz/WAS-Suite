@@ -13,5 +13,5 @@ do_tidy() {
     | xargs -n 1 echo '  RM:'
 }
 
-do_tidy lib t >&2
+do_tidy examples lib t >&2
 
