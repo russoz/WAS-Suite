@@ -1,6 +1,6 @@
 package WAS::Script;
 
-use Moose::Role;
+use Moose;
 use Moose::Util::TypeConstraints;
 
 use version; our $VERSION = qv('0.0.5');

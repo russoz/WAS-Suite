@@ -1,19 +1,11 @@
 use Test::More tests => 2;
 
 use strict;
+use WAS::App;
 
-package OneApp;
-
-use Moose;
-with 'WAS::App';
-
-1;
-
-package main;
-
-eval { my $aa = OneApp->new; };
+eval { my $aa = WAS::App->new; };
 ok($@);
 
-my $a = OneApp->new( name => 'myapp' );
+my $a = WAS::App->new( name => 'myapp' );
 ok($a);
 

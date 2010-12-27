@@ -1,7 +1,6 @@
 package WAS::App;
 
-use Moose::Role;
-
+use Moose;
 use version; our $VERSION = qv('0.0.5');
 
 =head1 NAME
@@ -29,11 +28,12 @@ Name of the application, as configured within WAS.
 
 =head2 server
 
-A weak reference, non-mandatory, 
+A weak reference, non-mandatory, to the L<WAS::Server> where this application
+is installed.
 
 =cut
 
-has name => ( is => 'ro', isa => 'Str', required => 1, );
+has name   => ( is => 'ro', isa => 'Str', required => 1, );
 has server => (
     is       => 'rw',
     isa      => 'WAS::Server',

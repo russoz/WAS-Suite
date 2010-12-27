@@ -1,12 +1,12 @@
 package WAS::Profile;
 
-use Moose::Role;
+use Moose;
 use common::sense;
 
 use version; our $VERSION = qv('0.0.5');
 
 use Scalar::Util qw/blessed/;
-use File::Spec::Functions;
+use File::Spec;
 
 =head1 NAME
 
@@ -96,7 +96,7 @@ sub is_local {
     eval {
         use Sys::Hostname;
         return 1 if $self->was_host eq hostname;
-
+        no Sys::Hostname;
     };
     eval {
         use Net::Domain qw/hostfqdn/;
@@ -114,7 +114,7 @@ Convenience method, returns the full pathname for the C<wsadmin> script.
 
 sub wsadmin_path {
     my $self = shift;
-    return catfile( $self->profile_path, 'bin', $self->wsadmin );
+    return File::Spec->catfile( $self->profile_path, 'bin', $self->wsadmin );
 }
 
 =head2 run_script( SCRIPT )

@@ -2,21 +2,14 @@ use Test::More tests => 3;
 
 use strict;
 
-package OneProfile;
+use WAS::Profile;
 
-use Moose;
-with 'WAS::Profile';
-
-1;
-
-package main;
-
-eval { my $ss = OneProfile->new; };
+eval { my $ss = WAS::Profile->new; };
 ok($@);
 
-my $s = OneProfile->new(
+my $s = WAS::Profile->new(
     name => 'AppSrv01',
-    path => '/somewhere/over/the/rainbow'
+    path => '/somewhere/over/the/rainbow',
 );
 ok($s);
 ok( $s->is_local );
